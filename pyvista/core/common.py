@@ -411,17 +411,21 @@ class Common(DataSetFilters, DataObject):
         arr = vtk_to_numpy(vtk_data)
         return pyvista_ndarray(arr, vtk_data)
 
-
     @points.setter
     def points(self, points):
         """ set points without copying """
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         vtk_points = pyvista.vtk_points(points, False)
-        self.SetPoints(vtk_points)
-        self.GetPoints().Modified()
-        self.Modified()
 
+        # modify the underlying data if available
+        pdata = self.GetPoints()
+        if pdata:
+            pdata.SetData(vtk_points.GetData())
+            pdata.Modified()
+        else:
+            self.SetPoints(vtk_points)
+        self.Modified()
 
     @property
     def arrows(self):
